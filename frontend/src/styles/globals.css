@@ -1,0 +1,579 @@
+@import "tailwindcss";
+
+:root {
+  font-family: "IBM Plex Sans Arabic", "Segoe UI", sans-serif;
+  color: #e8eef7;
+  background: #080d17;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --color-background: #080d17;
+  --color-surface: #0e1624;
+  --color-panel: #121d2e;
+  --color-border: #223149;
+  --color-text-primary: #e8eef7;
+  --color-text-secondary: #91a0b5;
+  --color-primary: #5b8cff;
+  --color-accent: #67e8c6;
+  --color-success: #43d19e;
+  --color-warning: #f4bf64;
+  --color-error: #f27d8a;
+  --color-info: #6bb8ff;
+}
+
+:root[data-theme="light"] {
+  color: #142033;
+  background: #f3f6fb;
+  --color-background: #f3f6fb;
+  --color-surface: #ffffff;
+  --color-panel: #eef3fa;
+  --color-border: #d6dfed;
+  --color-text-primary: #142033;
+  --color-text-secondary: #5e6c80;
+  --color-primary: #315fd5;
+  --color-accent: #087e68;
+  --color-success: #147b59;
+  --color-warning: #a36200;
+  --color-error: #b52c42;
+  --color-info: #1768a9;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { min-height: 100%; margin: 0; }
+body { min-width: 320px; background: var(--color-background); color: var(--color-text-primary); }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid color-mix(in srgb, var(--color-primary) 65%, transparent); outline-offset: 2px; }
+
+.app-shell { direction: inherit; }
+.editor-grid { min-width: 0; }
+.canvas-workspace, .canvas-editor-shell, .canvas-content-grid, .canvas-stage { min-width: 0; }
+.canvas-content-grid { direction: ltr; overflow: hidden; }
+html[dir="rtl"] .canvas-content-grid { direction: rtl; }
+.canvas-stage { direction: ltr; }
+.canvas-stage > canvas { display: block; max-width: none; }
+.canvas-editor-toolbar { min-width: 0; }
+.canvas-editor-toolbar > :first-child { min-width: 0; }
+.toolbar-actions { scrollbar-width: thin; }
+.toolbar-actions button { display: flex; flex: 0 0 64px; min-width: 64px; height: 50px; flex-direction: column; align-items: center; justify-content: center; gap: 2px; overflow: hidden; padding: 4px 3px; white-space: nowrap; }
+.toolbar-actions button::after { max-width: 100%; overflow: hidden; color: currentColor; content: attr(aria-label); font-size: 9px; line-height: 1.15; text-overflow: ellipsis; }
+.toolbar-actions > span { flex: 0 0 52px; }
+.tool-control-panel { width: 288px; max-width: 36vw; min-width: 240px; }
+.tool-control-panel > * { max-width: 100%; }
+
+@media (prefers-reduced-motion: no-preference) {
+  button, [data-interactive="true"] { transition: transform 160ms cubic-bezier(.23,1,.32,1), background-color 180ms ease, border-color 180ms ease, color 180ms ease; }
+  button:active { transform: scale(.97); }
+}
+
+@media (max-width: 1100px) {
+  .toolbar-actions button { flex-basis: 58px; min-width: 58px; }
+  .tool-control-panel { width: 272px; min-width: 248px; }
+}
+
+@media (max-width: 900px) {
+  .editor-grid { grid-template-columns: 72px minmax(0, 1fr); }
+  .properties-panel { position: fixed; inset-block: 64px 0; inset-inline-end: 0; z-index: 20; width: min(360px, 88vw); box-shadow: -16px 0 40px rgb(0 0 0 / 22%); }
+  .tool-control-panel { width: min(272px, 42vw); max-width: 42vw; min-width: 232px; }
+  .canvas-editor-toolbar { align-items: flex-start; flex-wrap: wrap; gap: 6px; }
+  .toolbar-actions { width: 100%; order: 2; }
+}
+
+@media (max-width: 640px) {
+  .editor-grid { display: block; overflow: auto; }
+  .tool-sidebar { display: none; }
+  .mobile-tool-sidebar { display: flex; width: 100%; max-height: none; border-inline-end: 0; }
+  .topbar-title { display: none; }
+  .properties-panel { inset-block-start: 56px; width: 100%; }
+  .canvas-workspace { min-height: calc(100dvh - 112px); overflow: hidden; }
+  .canvas-editor-shell { min-height: calc(100dvh - 112px); }
+  .canvas-content-grid { flex-direction: column; overflow: auto; }
+  .canvas-stage { min-height: 52dvh; flex: 1 0 52dvh; }
+  .tool-control-panel { width: 100%; max-width: none; min-width: 0; max-height: 46dvh; border-inline-start: 0; border-top: 1px solid var(--color-border); }
+  .toolbar-actions { padding-bottom: 2px; }
+  .toolbar-actions button { flex-basis: 62px; min-width: 62px; }
+}
+
+
+.processing-comparison-dock {
+  position: absolute;
+  inset: auto 12px 12px;
+  z-index: 12;
+  max-height: min(46%, 360px);
+  overflow: auto;
+  pointer-events: none;
+}
+
+.processing-comparison {
+  width: min(100%, 760px);
+  margin-inline: auto;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--color-border) 82%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-panel) 94%, transparent);
+  box-shadow: 0 12px 34px rgb(0 0 0 / 28%);
+  backdrop-filter: blur(10px);
+}
+
+.processing-comparison-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  color: var(--color-text-primary);
+}
+
+.processing-comparison-header h2 {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.processing-comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.processing-comparison-grid-triple {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.processing-comparison-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface);
+}
+
+.processing-comparison-card h3 {
+  margin: 0;
+  padding: 5px 8px;
+  overflow: hidden;
+  color: var(--color-text-secondary);
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.processing-comparison-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: clamp(92px, 15vw, 150px);
+  padding: 6px;
+  overflow: hidden;
+  background: repeating-conic-gradient(#cbd5e1 0 25%, #f8fafc 0 50%) 0 / 12px 12px;
+}
+
+.processing-comparison-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.processing-comparison-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  color: #fff;
+  background: rgb(8 13 23 / 48%);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .processing-comparison-dock {
+    inset: auto 8px 8px;
+    max-height: 42%;
+  }
+
+  .processing-comparison {
+    padding: 7px;
+  }
+
+  .processing-comparison-grid-triple {
+    grid-template-columns: 1fr;
+  }
+
+  .processing-comparison-grid-triple .processing-comparison-frame {
+    height: 88px;
+  }
+}
+
+/* UI layout correction: the center workspace owns the image and comparison; tool controls stay in the left rail. */
+@media (min-width: 901px) {
+  .editor-grid { direction: ltr; grid-template-columns: 288px minmax(0, 1fr) 80px; }
+  .properties-panel { grid-column: 1; grid-row: 1; border-inline-start: 0; border-inline-end: 1px solid var(--color-border); }
+  .canvas-workspace { grid-column: 2; grid-row: 1; }
+  .tool-sidebar { grid-column: 3; grid-row: 1; border-inline-end: 0; border-inline-start: 1px solid var(--color-border); }
+}
+
+.properties-tool-content { scrollbar-width: thin; }
+#properties-tool-root { min-height: 0; }
+#properties-tool-root > .tool-control-panel { width: 100%; max-width: none; min-width: 0; border: 0; padding: 0; background: transparent; }
+.canvas-content-grid { direction: ltr; overflow: hidden; }
+.canvas-stage { direction: ltr; }
+.canvas-stage > canvas { display: block; max-width: none; }
+.processing-comparison-dock { position: absolute; inset: auto 12px 12px; z-index: 12; max-height: min(46%, 360px); overflow: auto; pointer-events: none; }
+@media (max-width: 900px) {
+  .editor-grid { direction: ltr; grid-template-columns: minmax(0, 1fr) 72px; }
+  .canvas-workspace { grid-column: 1; grid-row: 1; }
+  .tool-sidebar { grid-column: 2; grid-row: 1; }
+  .properties-panel { position: fixed; inset-block: 64px 48px; inset-inline-start: 0; inset-inline-end: auto; z-index: 20; width: min(360px, 88vw); box-shadow: 16px 0 40px rgb(0 0 0 / 22%); }
+  .tool-control-panel { width: 100%; max-width: none; min-width: 0; }
+  .canvas-stage { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 12px 12px; overflow: auto; }
+  .canvas-stage > .canvas-container { position: relative !important; inset: auto !important; flex: 1 1 auto; min-height: 0; width: 100% !important; max-width: 100%; }
+  .canvas-stage > .canvas-container > canvas { position: absolute !important; inset: 0 !important; }
+  .processing-comparison-dock { position: relative; inset: auto; flex: 0 0 auto; width: min(100%, 760px); max-height: 320px; margin: 0 auto; overflow: auto; }
+}
+@media (max-width: 640px) {
+  .properties-panel { inset-block-start: 56px; inset-inline: 0; width: 100%; }
+  .canvas-content-grid { min-height: 0; }
+  .canvas-stage { display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 52dvh; flex: 1 0 52dvh; padding: 8px; overflow: auto; }
+  .canvas-stage > .canvas-container { flex: 0 0 min(52dvh, 58vw); width: 100% !important; min-height: 220px; }
+  .processing-comparison-dock { position: relative; inset: auto; width: 100%; max-height: 42%; margin: 0; }
+  .processing-comparison { width: 100%; }
+}
+
+/* Final workspace/comparison separation for desktop layouts. */
+@media (min-width: 901px) {
+  .canvas-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px 12px;
+    overflow: auto;
+  }
+
+  .canvas-stage > .canvas-container {
+    position: relative !important;
+    inset: auto !important;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  .canvas-stage > .canvas-container > canvas {
+    position: absolute !important;
+    inset: 0 !important;
+  }
+
+  .processing-comparison-dock {
+    position: relative;
+    inset: auto;
+    flex: 0 0 auto;
+    width: min(100%, 760px);
+    max-height: 320px;
+    margin: 0 auto;
+    overflow: auto;
+  }
+}
+
+.processing-comparison-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+@media (max-width: 640px) {
+  .processing-comparison-dock {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    margin: 0;
+  }
+}
+
+/* Final reference layout: centered header, compact comparison, full image visibility. */
+.app-topbar { position: relative; justify-content: center; }
+.app-topbar .topbar-leading,
+.app-topbar .topbar-actions { position: absolute; top: 50%; transform: translateY(-50%); }
+.app-topbar .topbar-leading { inset-inline-start: 1rem; }
+.app-topbar .topbar-actions { inset-inline-end: 1rem; }
+.app-topbar .topbar-title { text-align: center; }
+.app-topbar .topbar-title p:first-child { font-size: 1.25rem; font-weight: 700; line-height: 1.2; }
+
+@media (min-width: 901px) {
+  .canvas-stage > .canvas-container { flex: 0 0 min(54%, 560px); min-height: 280px; }
+  .processing-comparison-dock { margin-top: -2px; }
+  .processing-comparison { width: min(100%, 860px); padding: 12px; }
+  .processing-comparison-frame { height: clamp(150px, 18vw, 220px); }
+  .processing-comparison-frame img { width: 100%; height: auto; max-width: 100%; max-height: 100%; object-fit: contain !important; }
+}
+
+@media (max-width: 900px) {
+  .app-topbar .topbar-title p:first-child { font-size: 1.1rem; }
+  .canvas-stage > .canvas-container { flex-basis: min(48dvh, 58vw); }
+  .processing-comparison-dock { margin-top: -2px; }
+  .processing-comparison-frame img { width: 100%; height: auto; max-width: 100%; max-height: 100%; object-fit: contain !important; }
+}
+
+/* Reference 5: permanent centered canvas and complete comparison frames. */
+.canvas-stage {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.canvas-stage > .canvas-container {
+  flex: 0 0 min(54%, 560px);
+  width: 100% !important;
+  min-height: 280px;
+  max-width: 100%;
+}
+
+.processing-comparison-dock {
+  position: relative;
+  inset: auto;
+  flex: 0 0 auto;
+  width: min(100%, 860px);
+  max-height: none;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.processing-comparison {
+  width: 100%;
+  margin: 0;
+  padding: 12px;
+}
+
+.processing-comparison-grid {
+  gap: 12px;
+}
+
+.processing-comparison-frame {
+  height: clamp(180px, 20vw, 240px);
+  overflow: hidden;
+}
+
+.processing-comparison-frame img {
+  display: block;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain !important;
+}
+
+@media (max-width: 640px) {
+  .canvas-stage {
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .canvas-stage > .canvas-container {
+    flex: 0 0 min(48dvh, 58vw);
+    min-height: 220px;
+  }
+
+  .processing-comparison-frame {
+    height: 180px;
+  }
+}
+
+/* Reference layout: comparison-only workspace when an asset is loaded. */
+.canvas-stage > canvas,
+.canvas-stage > button,
+.canvas-stage > img,
+.canvas-stage > div:not(.processing-comparison-dock) {
+  display: none !important;
+}
+
+.canvas-stage {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: auto !important;
+  padding: 1.5rem !important;
+}
+
+.canvas-stage > .processing-comparison-dock {
+  position: static !important;
+  display: flex !important;
+  width: min(100%, 1120px) !important;
+  max-width: 1120px !important;
+  margin: 0 auto !important;
+  flex: 0 1 auto !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.processing-comparison-dock .processing-comparison,
+.processing-comparison-dock .processing-comparison-grid {
+  width: 100% !important;
+}
+
+.processing-comparison-dock .processing-comparison-grid {
+  display: flex !important;
+  align-items: stretch !important;
+  justify-content: center !important;
+  gap: 1rem !important;
+}
+
+.processing-comparison-dock .processing-comparison-card {
+  min-width: 0 !important;
+  flex: 1 1 0 !important;
+}
+
+.processing-comparison-dock .processing-comparison-frame {
+  width: 100% !important;
+  min-height: clamp(240px, 42vh, 520px) !important;
+  overflow: hidden !important;
+}
+
+.processing-comparison-dock .processing-comparison-frame img {
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+  max-width: 100% !important;
+  object-fit: contain !important;
+}
+
+@media (max-width: 720px) {
+  .canvas-stage > .processing-comparison-dock {
+    width: 100% !important;
+  }
+
+  .processing-comparison-dock .processing-comparison-grid {
+    flex-direction: column !important;
+  }
+
+  .processing-comparison-dock .processing-comparison-frame {
+    min-height: 180px !important;
+  }
+}
+
+/* Locked upper canvas viewport. This wrapper owns the image position independently from the toolbar. */
+.main-canvas-wrapper {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  overflow: hidden !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+}
+
+.main-canvas-wrapper > .canvas-stage {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  overflow: hidden !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+}
+
+.main-canvas-wrapper > .canvas-stage > canvas {
+  position: relative !important;
+  inset: auto !important;
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  margin: auto !important;
+  object-fit: contain !important;
+  flex: 0 0 auto !important;
+}
+
+.main-canvas-wrapper > .canvas-stage > .processing-comparison-dock {
+  position: absolute !important;
+  inset: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: none !important;
+}
+
+.main-canvas-wrapper > .canvas-stage > .canvas-container {
+  display: block !important;
+  position: relative !important;
+  inset: auto !important;
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  margin: auto !important;
+  flex: 0 0 auto !important;
+}
+
+.main-canvas-wrapper > .canvas-stage > .canvas-container > canvas {
+  position: relative !important;
+  inset: auto !important;
+  display: block !important;
+  margin: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+}
+
+/* Keep the locked canvas and comparison in a stable vertical flow; never overlay the image. */
+.main-canvas-wrapper > .canvas-stage {
+  justify-content: center !important;
+  overflow: auto !important;
+  gap: 12px !important;
+}
+
+.main-canvas-wrapper > .canvas-stage > .processing-comparison-dock {
+  position: static !important;
+  inset: auto !important;
+  flex: 0 0 auto !important;
+  width: min(100%, 1120px) !important;
+  max-width: 1120px !important;
+  max-height: none !important;
+  margin: 0 auto !important;
+  overflow: visible !important;
+  pointer-events: none !important;
+}
+
+/* Prevent flex centering of an overflowing canvas+comparison stack from shifting the canvas out of view. */
+.main-canvas-wrapper > .canvas-stage {
+  justify-content: flex-start !important;
+  align-items: center !important;
+  overflow: auto !important;
+}
+
+.main-canvas-wrapper > .canvas-stage > .canvas-container {
+  margin: 0 auto !important;
+}
+
+/* Fabric must use the full locked viewport; its internal centered pan then remains stable. */
+.main-canvas-wrapper > .canvas-stage > .canvas-container {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  min-height: 0 !important;
+  flex: 1 1 auto !important;
+  margin: 0 !important;
+}
+
+.main-canvas-wrapper > .canvas-stage > .canvas-container > canvas {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+}

@@ -1,0 +1,59 @@
+# ==============================
+# Python
+# ==============================
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# ==============================
+# Node / Frontend
+# ==============================
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# ==============================
+# Environment / Secrets
+# ==============================
+.env
+.env.*
+!.env.example
+
+# ==============================
+# IDE
+# ==============================
+.vscode/
+.idea/
+
+# ==============================
+# OS
+# ==============================
+.DS_Store
+Thumbs.db
+
+# ==============================
+# Logs / Temporary
+# ==============================
+*.log
+*.tmp
+*.temp
+
+# ==============================
+# Cache
+# ==============================
+.cache/
+.pyright/
+# Python package metadata
+*.egg-info/
